@@ -1,15 +1,15 @@
 package main
 
 import (
-	"fmt"
-	"io"
 	"log/slog"
-	"net/http"
 	"os"
 
-	"payments/internal/interfaces/adapters/dto"
+	"payments/internal/interfaces/adapters/controllers"
+	"payments/internal/interfaces/database/mongodb"
+	"payments/internal/interfaces/gateways/persistence"
 
 	"payments/pkg/middleware"
+	"payments/pkg/queue"
 
 	"github.com/gin-gonic/gin"
 )
@@ -35,44 +35,26 @@ func main() {
 
 	slog.SetDefault(logger)
 
+	mongodb.MongoDBSetup()
+
+	queueService := queue.NewQueue()
+
 	r := gin.New()
 
 	r.Use(middleware.DefaultStructuredLogger())
 	r.Use(gin.Recovery())
 
+	paymentRepository := persistence.NewPaymentRepository(mongodb.MongoDB)
+
 	v1 := r.Group("/api/v1")
 
-	v1.POST("/payments", func(c *gin.Context) {
-		logCorrelationID, _ := c.Get("logCorrelationID")
+	paymentsController := controllers.NewPaymentsController(logger, paymentRepository)
 
-		contextlogger := logger.With("correlation_id", logCorrelationID)
+	v1.GET("/payments/:identifier", paymentsController.Get)
 
-		var paymentRequest dto.PaymentRequest
+	v1.POST("/payments", paymentsController.Create)
 
-		if err := c.BindJSON(&paymentRequest); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
+	go queueService.Consumer(logger)
 
-		// Make a GET request
-		response, err := http.Get("http://localhost:8081/enqueue")
-		if err != nil {
-			fmt.Println("Error:", err)
-			return
-		}
-		defer response.Body.Close()
-
-		// Read the response body
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			fmt.Println("Error reading response body:", err)
-			return
-		}
-
-		contextlogger.Info("Enqueued Successfully", "transaction_id", string(body))
-
-		c.JSON(http.StatusOK, string(body))
-	})
-
-	r.Run()
+	r.Run(":9090")
 }
