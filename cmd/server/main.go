@@ -48,7 +48,7 @@ func main() {
 
 	v1 := r.Group("/api/v1")
 
-	paymentsController := controllers.NewPaymentsController(logger, paymentRepository)
+	paymentsController := controllers.NewPaymentsController(logger, paymentRepository, queueService)
 
 	v1.GET("/payments/:identifier", paymentsController.Get)
 

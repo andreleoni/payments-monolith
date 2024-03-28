@@ -5,10 +5,14 @@ import (
 	"payments/internal/domain/entity"
 	"payments/internal/domain/repository"
 	"payments/internal/interfaces/adapters/dto"
+	"payments/internal/interfaces/adapters/queue/jobs"
+	"payments/pkg/queue"
 )
 
 type CreatePaymentRequestUseCase struct {
+	logger            *slog.Logger
 	paymentRepository repository.Payment
+	queueService      *queue.Queue
 }
 
 type CreatePaymentRequestInput struct {
@@ -20,12 +24,14 @@ type CreatePaymentRequestOutput struct {
 	Error string `json:"error,omitempty"`
 }
 
-func NewCreatePaymentRequestUseCase(paymentRepository repository.Payment) CreatePaymentRequestUseCase {
-	return CreatePaymentRequestUseCase{paymentRepository: paymentRepository}
+func NewCreatePaymentRequestUseCase(
+	paymentRepository repository.Payment, queueService *queue.Queue) CreatePaymentRequestUseCase {
+
+	return CreatePaymentRequestUseCase{paymentRepository: paymentRepository, queueService: queueService}
 }
 
 func (cpruc CreatePaymentRequestUseCase) Execute(
-	logger slog.Logger, cpri CreatePaymentRequestInput) CreatePaymentRequestOutput {
+	logger *slog.Logger, cpri CreatePaymentRequestInput) CreatePaymentRequestOutput {
 
 	_, exists, err := cpruc.paymentRepository.Get(cpri.PaymentRequest.Identifier)
 	if exists {
@@ -46,6 +52,8 @@ func (cpruc CreatePaymentRequestUseCase) Execute(
 
 		return CreatePaymentRequestOutput{Error: "erro ao criar request"}
 	}
+
+	cpruc.queueService.Enqueue(jobs.NewPaymentProcessorJob(cpruc.logger, paymentEntity.ID))
 
 	return CreatePaymentRequestOutput{ID: paymentEntity.ID}
 }

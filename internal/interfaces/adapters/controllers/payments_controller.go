@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"payments/internal/domain/repository"
 	"payments/internal/domain/usecase"
+	"payments/pkg/queue"
 
 	"payments/internal/interfaces/adapters/dto"
 
@@ -15,17 +16,23 @@ import (
 type PaymentsController struct {
 	logger            *slog.Logger
 	paymentRepository repository.Payment
+	queueService      *queue.Queue
 }
 
-func NewPaymentsController(logger *slog.Logger, paymentRepository repository.Payment) PaymentsController {
-	return PaymentsController{logger: logger, paymentRepository: paymentRepository}
+func NewPaymentsController(
+	logger *slog.Logger, paymentRepository repository.Payment, queueService *queue.Queue) PaymentsController {
+
+	return PaymentsController{logger: logger, paymentRepository: paymentRepository, queueService: queueService}
 }
 
 func (ppc PaymentsController) Create(c *gin.Context) {
-	createPaymentRequestUseCase := usecase.NewCreatePaymentRequestUseCase(ppc.paymentRepository)
+	createPaymentRequestUseCase := usecase.NewCreatePaymentRequestUseCase(
+		ppc.paymentRepository, ppc.queueService)
 
 	logCorrelationID, _ := c.Get("logCorrelationID")
 
+	// Tips: With will clone the logger, so, you will not change the
+	//   global slog state
 	contextlogger := ppc.logger.With("correlation_id", logCorrelationID)
 
 	var paymentRequest dto.PaymentRequest
@@ -37,7 +44,7 @@ func (ppc PaymentsController) Create(c *gin.Context) {
 
 	cpri := usecase.CreatePaymentRequestInput{PaymentRequest: paymentRequest}
 
-	output := createPaymentRequestUseCase.Execute(*ppc.logger, cpri)
+	output := createPaymentRequestUseCase.Execute(ppc.logger, cpri)
 
 	if output.Error != "" {
 		fmt.Println(output)
