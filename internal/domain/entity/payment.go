@@ -13,6 +13,7 @@ type Payment struct {
 	AddressNumber     string `json:"number"`
 	AddressComplement string `json:"complement"`
 	CreatedAt         string `json:"created_at"`
+	ValueCents        uint64 `json:"value_cents"`
 	State             string
 	Error             string
 }

@@ -27,4 +27,5 @@ type PaymentRequest struct {
 	Identifier string     `json:"identifier"`
 	CreditCard CreditCard `json:"credit_card"`
 	User       User       `json:"user"`
+	ValueCents uint64     `json:"value_cents"`
 }
