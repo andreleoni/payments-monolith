@@ -3,9 +3,11 @@ package usecase
 import (
 	"log/slog"
 	"payments/internal/domain/repository"
+	"payments/pkg/externalpaymentservice"
 )
 
 type ProcessPaymentRequestUseCase struct {
+	logger            *slog.Logger
 	paymentRepository repository.Payment
 }
 
@@ -18,8 +20,10 @@ type ProcessPaymentRequestOutput struct {
 	Error string `json:"error,omitempty"`
 }
 
-func NewProcessPaymentRequestUseCase(paymentRepository repository.Payment) ProcessPaymentRequestUseCase {
-	return ProcessPaymentRequestUseCase{paymentRepository: paymentRepository}
+func NewProcessPaymentRequestUseCase(
+	logger *slog.Logger, paymentRepository repository.Payment) ProcessPaymentRequestUseCase {
+
+	return ProcessPaymentRequestUseCase{logger: logger, paymentRepository: paymentRepository}
 }
 
 func (ppruc ProcessPaymentRequestUseCase) Execute(
@@ -33,6 +37,18 @@ func (ppruc ProcessPaymentRequestUseCase) Execute(
 
 		return ProcessPaymentRequestOutput{Error: "erro ao criar request"}
 	}
+
+	err = externalpaymentservice.Pay(input.PaymentID)
+
+	if err != nil {
+		ppruc.paymentRepository.SetError(input.PaymentID, err)
+	} else {
+		ppruc.paymentRepository.SetState(input.PaymentID, "approved")
+	}
+
+	ppruc.logger.Info(
+		"Payment processed with success!",
+		"payment_id", paymentEntity)
 
 	return ProcessPaymentRequestOutput{ID: paymentEntity.ID}
 }

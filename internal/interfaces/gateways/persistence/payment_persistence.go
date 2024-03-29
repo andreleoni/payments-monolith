@@ -48,6 +48,7 @@ func (gr PaymentRepository) Get(identifier string) (*entity.Payment, bool, error
 func (pr PaymentRepository) Create(p *entity.Payment) error {
 	p.ID = random.Hex(10)
 	p.CreatedAt = time.Now().UTC().Format(time.RFC3339)
+	p.State = "waiting"
 
 	// Insert the item into the collection
 	insertResult, err := pr.collection.InsertOne(context.Background(), p)
@@ -59,6 +60,40 @@ func (pr PaymentRepository) Create(p *entity.Payment) error {
 		"insertResult", insertResult,
 		"error", err,
 	)
+
+	return err
+}
+
+func (pr PaymentRepository) SetState(paymentID string, newState string) error {
+	filter := bson.M{"id": paymentID}
+
+	update := bson.M{"$set": bson.M{"status": newState}}
+
+	_, err := pr.collection.UpdateOne(context.Background(), filter, update)
+
+	if err != nil {
+		slog.Error("Error updating status",
+			"paymentID", paymentID,
+			"newState", newState,
+			"error", err)
+	}
+
+	return err
+}
+
+func (pr PaymentRepository) SetError(paymentID string, err error) error {
+	filter := bson.M{"id": paymentID}
+
+	update := bson.M{"$set": bson.M{"error": err.Error(), "state": "error"}}
+
+	_, updateerr := pr.collection.UpdateOne(context.Background(), filter, update)
+
+	if updateerr != nil {
+		slog.Error("Error updating status",
+			"paymentID", paymentID,
+			"err", err,
+			"updateerr", updateerr)
+	}
 
 	return err
 }

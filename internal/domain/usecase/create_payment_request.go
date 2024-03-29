@@ -5,7 +5,6 @@ import (
 	"payments/internal/domain/entity"
 	"payments/internal/domain/repository"
 	"payments/internal/interfaces/adapters/dto"
-	"payments/internal/interfaces/adapters/queue/jobs"
 	"payments/pkg/queue"
 )
 
@@ -52,8 +51,6 @@ func (cpruc CreatePaymentRequestUseCase) Execute(
 
 		return CreatePaymentRequestOutput{Error: "erro ao criar request"}
 	}
-
-	cpruc.queueService.Enqueue(jobs.NewPaymentProcessorJob(cpruc.logger, paymentEntity.ID))
 
 	return CreatePaymentRequestOutput{ID: paymentEntity.ID}
 }
