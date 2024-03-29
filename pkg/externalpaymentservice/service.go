@@ -1,10 +1,14 @@
 package externalpaymentservice
 
-import "log/slog"
+import (
+	"log/slog"
+	"payments/pkg/random"
+)
 
-func Pay(attributes string) error {
-	slog.Info("Payment done",
-		"attributes", attributes)
+func Pay(attributes string) (string, error) {
+	slog.Info("Payment done on privider",
+		"attributes", attributes,
+		"provider", "fakeProviderName")
 
-	return nil
+	return random.Hex(10), nil
 }

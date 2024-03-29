@@ -2,8 +2,8 @@ package mongodb
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"log/slog"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -28,7 +28,7 @@ func MongoDBSetup() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Connected to MongoDB!")
+	slog.Info("Connected to MongoDB!")
 
 	MongoDB = client
 }

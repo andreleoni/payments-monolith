@@ -10,14 +10,16 @@ func NewQueue() *Queue {
 	return &Queue{jobs: make(chan Job)}
 }
 
-func (q Queue) Enqueue(job Job) {
+func (q *Queue) Enqueue(job Job) {
 	q.jobs <- job
 }
 
-func (q Queue) Consumer(logger *slog.Logger) {
+func (q *Queue) Consumer(logger *slog.Logger) {
 	logger.Info("Starting consumer...")
 
-	for job := range q.jobs {
+	for {
+		job := <-q.jobs
+
 		job.Logger().Info(
 			"Starting process job",
 			"job", job)

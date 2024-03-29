@@ -38,12 +38,12 @@ func (ppruc ProcessPaymentRequestUseCase) Execute(
 		return ProcessPaymentRequestOutput{Error: "erro ao criar request"}
 	}
 
-	err = externalpaymentservice.Pay(input.PaymentID)
+	externalServiceIdentifier, err := externalpaymentservice.Pay(input.PaymentID)
 
 	if err != nil {
 		ppruc.paymentRepository.SetError(input.PaymentID, err)
 	} else {
-		ppruc.paymentRepository.SetState(input.PaymentID, "approved")
+		ppruc.paymentRepository.SetApproved(input.PaymentID, externalServiceIdentifier, "approved")
 	}
 
 	ppruc.logger.Info(

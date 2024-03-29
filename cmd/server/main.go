@@ -35,9 +35,10 @@ func main() {
 
 	slog.SetDefault(logger)
 
-	mongodb.MongoDBSetup()
-
 	queueService := queue.NewQueue()
+	go queueService.Consumer(logger)
+
+	mongodb.MongoDBSetup()
 
 	r := gin.New()
 
@@ -54,8 +55,6 @@ func main() {
 	v1.GET("/payments/:identifier", paymentsController.Get)
 
 	v1.POST("/payments", paymentsController.Create)
-
-	go queueService.Consumer(logger)
 
 	r.Run(":9090")
 }

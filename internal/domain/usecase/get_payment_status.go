@@ -6,6 +6,7 @@ import (
 )
 
 type GetPaymentStatusUseCase struct {
+	logger            *slog.Logger
 	paymentRepository repository.Payment
 }
 
@@ -19,20 +20,22 @@ type GetPaymentStatusOutput struct {
 	Error  string `json:"error,omitempty"`
 }
 
-func NewGetPaymentStatusUseCase() GetPaymentStatusUseCase {
-	return GetPaymentStatusUseCase{}
+func NewGetPaymentStatusUseCase(
+	logger *slog.Logger, paymentRepository repository.Payment) GetPaymentStatusUseCase {
+
+	return GetPaymentStatusUseCase{logger: logger, paymentRepository: paymentRepository}
 }
 
 func (gpsuc GetPaymentStatusUseCase) Execute(
 	input GetPaymentStatusInput) GetPaymentStatusOutput {
 	paymentEntity, exists, err := gpsuc.paymentRepository.Get(input.Identifier)
 	if exists {
-		return GetPaymentStatusOutput{Error: "identifier já existe na base"}
+		return GetPaymentStatusOutput{Status: paymentEntity.State}
 	} else if err != nil {
 		slog.Error("erro ao buscar repository",
 			"error", err)
 
-		return GetPaymentStatusOutput{Error: "erro ao criar request"}
+		return GetPaymentStatusOutput{Error: paymentEntity.Error}
 	}
 
 	return GetPaymentStatusOutput{ID: paymentEntity.ID, Status: paymentEntity.State}

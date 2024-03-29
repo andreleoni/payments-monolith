@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 	"payments/internal/domain/repository"
@@ -9,6 +8,7 @@ import (
 	"payments/pkg/queue"
 
 	"payments/internal/interfaces/adapters/dto"
+	"payments/internal/interfaces/jobs"
 
 	"github.com/gin-gonic/gin"
 )
@@ -47,11 +47,12 @@ func (ppc PaymentsController) Create(c *gin.Context) {
 	output := createPaymentRequestUseCase.Execute(ppc.logger, cpri)
 
 	if output.Error != "" {
-		fmt.Println(output)
 		c.JSON(http.StatusUnprocessableEntity, output)
 
 		return
 	}
+
+	ppc.queueService.Enqueue(jobs.NewPaymentProcessorJob(ppc.logger, output.ID, ppc.paymentRepository))
 
 	contextlogger.Info("Created transaction ID sucessfully", "id", output.ID)
 
@@ -63,11 +64,12 @@ func (ppc PaymentsController) Get(c *gin.Context) {
 
 	contextlogger := ppc.logger.With("correlation_id", logCorrelationID)
 
-	contextlogger.Info("Get from database")
+	getPaymentStatusUseCase := usecase.NewGetPaymentStatusUseCase(
+		contextlogger, ppc.paymentRepository)
 
-	data := map[string]string{
-		"hello": "test",
-	}
+	input := usecase.GetPaymentStatusInput{Identifier: c.Param("identifier")}
 
-	c.JSON(http.StatusOK, data)
+	output := getPaymentStatusUseCase.Execute(input)
+
+	c.JSON(http.StatusOK, output)
 }
