@@ -30,7 +30,7 @@ func (j PaymentProcessorJob) Process() error {
 
 	ppri := usecase.ProcessPaymentRequestInput{PaymentID: j.id}
 
-	output := ppruc.Execute(ppri)
+	output := ppruc.Execute(j.logger, ppri)
 
 	return fmt.Errorf(output.Error)
 }

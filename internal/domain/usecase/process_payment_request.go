@@ -7,7 +7,6 @@ import (
 )
 
 type ProcessPaymentRequestUseCase struct {
-	logger            *slog.Logger
 	paymentRepository repository.Payment
 }
 
@@ -23,11 +22,12 @@ type ProcessPaymentRequestOutput struct {
 func NewProcessPaymentRequestUseCase(
 	logger *slog.Logger, paymentRepository repository.Payment) ProcessPaymentRequestUseCase {
 
-	return ProcessPaymentRequestUseCase{logger: logger, paymentRepository: paymentRepository}
+	return ProcessPaymentRequestUseCase{paymentRepository: paymentRepository}
 }
 
 func (ppruc ProcessPaymentRequestUseCase) Execute(
-	input ProcessPaymentRequestInput) ProcessPaymentRequestOutput {
+	logger *slog.Logger, input ProcessPaymentRequestInput) ProcessPaymentRequestOutput {
+
 	paymentEntity, exists, err := ppruc.paymentRepository.Get(input.PaymentID)
 	if exists {
 		return ProcessPaymentRequestOutput{Error: "identifier já existe na base"}
@@ -46,7 +46,7 @@ func (ppruc ProcessPaymentRequestUseCase) Execute(
 		ppruc.paymentRepository.SetApproved(input.PaymentID, externalServiceIdentifier, "approved")
 	}
 
-	ppruc.logger.Info(
+	logger.Info(
 		"Payment processed with success!",
 		"payment_id", paymentEntity)
 

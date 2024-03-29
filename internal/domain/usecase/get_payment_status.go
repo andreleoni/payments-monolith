@@ -6,7 +6,6 @@ import (
 )
 
 type GetPaymentStatusUseCase struct {
-	logger            *slog.Logger
 	paymentRepository repository.Payment
 }
 
@@ -20,14 +19,12 @@ type GetPaymentStatusOutput struct {
 	Error  string `json:"error,omitempty"`
 }
 
-func NewGetPaymentStatusUseCase(
-	logger *slog.Logger, paymentRepository repository.Payment) GetPaymentStatusUseCase {
-
-	return GetPaymentStatusUseCase{logger: logger, paymentRepository: paymentRepository}
+func NewGetPaymentStatusUseCase(paymentRepository repository.Payment) GetPaymentStatusUseCase {
+	return GetPaymentStatusUseCase{paymentRepository: paymentRepository}
 }
 
 func (gpsuc GetPaymentStatusUseCase) Execute(
-	input GetPaymentStatusInput) GetPaymentStatusOutput {
+	logger *slog.Logger, input GetPaymentStatusInput) GetPaymentStatusOutput {
 	paymentEntity, exists, err := gpsuc.paymentRepository.Get(input.Identifier)
 	if exists {
 		return GetPaymentStatusOutput{Status: paymentEntity.State}

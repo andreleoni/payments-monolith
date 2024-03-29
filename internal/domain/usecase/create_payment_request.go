@@ -9,7 +9,6 @@ import (
 )
 
 type CreatePaymentRequestUseCase struct {
-	logger            *slog.Logger
 	paymentRepository repository.Payment
 	queueService      *queue.Queue
 }

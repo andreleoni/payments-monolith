@@ -65,11 +65,11 @@ func (ppc PaymentsController) Get(c *gin.Context) {
 	contextlogger := ppc.logger.With("correlation_id", logCorrelationID)
 
 	getPaymentStatusUseCase := usecase.NewGetPaymentStatusUseCase(
-		contextlogger, ppc.paymentRepository)
+		ppc.paymentRepository)
 
 	input := usecase.GetPaymentStatusInput{Identifier: c.Param("identifier")}
 
-	output := getPaymentStatusUseCase.Execute(input)
+	output := getPaymentStatusUseCase.Execute(contextlogger, input)
 
 	c.JSON(http.StatusOK, output)
 }
