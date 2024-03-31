@@ -59,6 +59,7 @@ func (CreatePaymentRequestUseCase) dtoToEntityConverter(
 
 	return entity.Payment{
 		Identifier:        pr.Identifier,
+		ValueCents:        pr.ValueCents,
 		UserFullName:      pr.User.FullName,
 		UserCPF:           pr.User.CPF,
 		CreditCardNumber:  pr.CreditCard.Number,

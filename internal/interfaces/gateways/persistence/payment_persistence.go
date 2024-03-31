@@ -65,11 +65,13 @@ func (pr PaymentRepository) Create(p *entity.Payment) error {
 }
 
 func (pr PaymentRepository) SetApproved(paymentID, externalServiceIdentifier, newState string) error {
-	filter := bson.M{"id": paymentID}
+	filterFields := bson.M{"id": paymentID}
 
-	update := bson.M{"$set": bson.M{"status": newState, "external_service_identifier": externalServiceIdentifier}}
+	updateFields := bson.M{"$set": bson.M{
+		"status":                      newState,
+		"external_service_identifier": externalServiceIdentifier}}
 
-	_, err := pr.collection.UpdateOne(context.Background(), filter, update)
+	_, err := pr.collection.UpdateOne(context.Background(), filterFields, updateFields)
 
 	if err != nil {
 		slog.Error("Error updating status",

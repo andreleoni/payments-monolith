@@ -14,7 +14,7 @@ type Payment struct {
 	AddressComplement         string `json:"complement"`
 	CreatedAt                 string `json:"created_at"`
 	ValueCents                uint64 `json:"value_cents"`
-	ExternalServiceIdentifier uint64 `json:"external_service_identifier"`
+	ExternalServiceIdentifier string `json:"external_service_identifier"`
 	State                     string `json:"state"`
 	Error                     string `json:"error"`
 }
